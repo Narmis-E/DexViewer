@@ -8,10 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
 
-import dexShareCredentials
-
-credentials_window = dexShareCredentials.DexShareCredentials()
-
 class BgPlotter(Gtk.Box):
     def __init__(self):
       super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
@@ -36,11 +32,7 @@ class BgPlotter(Gtk.Box):
       self.ax.spines['bottom'].set_visible(False)
 
       self.create_background_rectangles()
-      if not os.path.isfile("BG_data.csv"):
-        # If the file does not exist, prompt the user for credentials
-        credentials_window.present()
-      else:
-        self.load_csv_data()
+      self.load_csv_data()
 
     def set_time_scale(self, time_scale_hours):
       self.time_scale_hours = time_scale_hours

@@ -7,9 +7,13 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Gdk, Adw, Gio, GLib
 
+from utils import *
+
 class DexShareCredentials(Gtk.Window):
-    def __init__(self):
+    def __init__(self, get_glucose_func, load_credentials_func):
         super().__init__(title="Dexcom Share Credentials")
+        self.get_glucose = get_glucose_func
+        self.load_credentials = load_credentials_func
         self.set_default_size(250, 150)
         self.set_resizeable = False
         self.set_modal(True)  # Make it a modal window
@@ -45,17 +49,18 @@ class DexShareCredentials(Gtk.Window):
         self.set_child(grid)
 
     def on_ok_clicked(self, button):
+        config_exists = os.path.isfile('config.ini')
+        if config_exists:
+            self.username, self.password, self.ous = self.load_credentials()
         self.username = self.username_entry.get_text()
         self.password = self.password_entry.get_text()
         self.ous = str(self.ous_check.get_active())  # Get the state of the OUS checkbox
 
         self.save_credentials_to_config()
-        
-    
-        get_glucose(int(time_scale_hours)*60)
 
         # Close the window
         self.destroy()
+        self.get_glucose(3*60)
 
     def on_exit_clicked(self, button):
         # Close the window without taking any action
@@ -74,4 +79,5 @@ class DexShareCredentials(Gtk.Window):
 
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
+        return self.username, self.password, self.ous
         

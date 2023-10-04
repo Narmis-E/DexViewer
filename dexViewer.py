@@ -10,10 +10,10 @@ from gi.repository import Gtk, Gdk, Adw, Gio, GLib
 
 from utils import *
 import dexShareCredentials
-from dexcom import get_glucose
 import bgPlotter
+from configHandler import load_credentials
 
-credentials_window = dexShareCredentials.DexShareCredentials()
+credentials_window = dexShareCredentials.DexShareCredentials(get_glucose, load_credentials)
 plotter = bgPlotter.BgPlotter()
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -23,49 +23,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.set_default_size(800, 400)
         self.set_title("DexViewer")
         self.connect("close-request", self.on_delete_event)
-        self.load_credentials_from_config()
+        self.username, self.password, self.ous = load_credentials()
 
         # Create a header bar
         self.header = Gtk.HeaderBar()
         self.set_titlebar(self.header)
-        self.add_share_source = Gtk.Button(label="Open")
-        self.add_share_source.add_css_class('add_share_source')
-        self.add_share_source.connect("clicked", self.on_add_share_source_clicked)
-        self.add_share_source.set_icon_name("list-add")
-        self.header.pack_start(self.add_share_source)
         
-        self.box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.box2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.box3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_child(self.box1)
-        self.box1.append(self.box2)  # Put vert box in that box
-        self.box1.append(self.box3)  # And another one, empty for now
-        
-        self.time_scale_combo = Gtk.ComboBoxText()
-        self.time_scale_combo.append("0", "1 Hour")
-        self.time_scale_combo.append("1", "3 Hours")
-        self.time_scale_combo.append("2","6 Hours")
-        self.time_scale_combo.append("3","12 Hours")
-        self.time_scale_combo.connect("changed", self.on_time_scale_changed)
-        self.box3.append(self.time_scale_combo)
-        self.time_scale_combo.set_active(1)
-
-        self.box2.append(plotter.canvas)
-        
-        # Create a Gtk.Label to display the number
-        self.number_label = Gtk.Label(label="5.5")
-        self.number_label.set_hexpand(True)
-        self.number_label.set_vexpand(True)
-        self.number_label.set_justify(Gtk.Justification.CENTER)
-        # Add the label to the box3 container
-        self.box3.append(self.number_label)
-        
-        action = Gio.SimpleAction.new("sync_glucose", None)
-        action.connect("activate", self.sync_glucose)
-        self.add_action(action) 
         menu = Gio.Menu.new()
-        menu.append("Sync Glucose", "win.sync_glucose")
-        
         # Create a popover
         self.popover = Gtk.PopoverMenu()  # Create a new popover menu
         self.popover.set_menu_model(menu)
@@ -85,8 +49,45 @@ class MainWindow(Gtk.ApplicationWindow):
         action = Gio.SimpleAction.new("about", None)
         action.connect("activate", self.show_about)
         self.add_action(action)
-        
         menu.append("About", "win.about")  # Add it to the menu we created in previous section
+        
+        self.add_share_source = Gtk.Button(label="Open")
+        self.add_share_source.add_css_class('add_share_source')
+        self.add_share_source.connect("clicked", self.on_add_share_source_clicked)
+        self.add_share_source.set_icon_name("list-add")
+        self.header.pack_start(self.add_share_source)
+        
+        self.add_share_source = Gtk.Button(label="Sync")
+        self.add_share_source.add_css_class('sync_glucose')
+        self.add_share_source.connect("clicked", self.sync_glucose)
+        self.add_share_source.set_icon_name("view-refresh-symbolic")
+        self.header.pack_end(self.add_share_source)
+        
+        self.box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.box2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.box3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_child(self.box1)
+        self.box1.append(self.box2)  # Put vert box in that box
+        self.box1.append(self.box3)  # And another one, empty for now
+        
+        self.time_scale_combo = Gtk.ComboBoxText()
+        self.time_scale_combo.append("0", "1 Hour")
+        self.time_scale_combo.append("1", "3 Hours")
+        self.time_scale_combo.append("2","6 Hours")
+        self.time_scale_combo.append("3","12 Hours")
+        self.time_scale_combo.set_active(1)
+        self.time_scale_combo.connect("changed", self.on_time_scale_changed)
+        self.box3.append(self.time_scale_combo)
+
+        self.box2.append(plotter.canvas)
+        
+        # Create a Gtk.Label to display the number
+        self.number_label = Gtk.Label(label="5.5")
+        self.number_label.set_hexpand(True)
+        self.number_label.set_vexpand(True)
+        self.number_label.set_justify(Gtk.Justification.CENTER)
+        # Add the label to the box3 container
+        self.box3.append(self.number_label)
 
     def show_about(self, action, param):
         self.about = Gtk.AboutDialog()
@@ -107,7 +108,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_delete_event(self, event):
         Gtk.Application.get_default().quit()
 
-    def sync_glucose(self, action, param):
+    def sync_glucose(self, button):
         active_text = self.time_scale_combo.get_active_text()
         if self.username is not None and self.password is not None:
             if active_text == "1 Hour":
@@ -122,35 +123,17 @@ class MainWindow(Gtk.ApplicationWindow):
             elif active_text == "12 Hours":
                 self.fetch_dexcom_data(12)  
                 plotter.set_time_scale(12)
-                get_glucose(int(time_scale_hours)*60)
         print("Synchronised Blood Glucose")
         
     def on_add_share_source_clicked(self, button):
+        credentials_window = dexShareCredentials.DexShareCredentials(get_glucose, load_credentials)
         credentials_window.present()
     
-    def load_credentials_from_config(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-
-        if 'Credentials' in config:
-            self.username = config['Credentials'].get('username', '')
-            self.password = config['Credentials'].get('password', '')
-            self.ous = config['Credentials'].get('ous', 'False')  # Default to 'False' if not present
-            print(f"Loaded credentials for {self.username}")
-
-            if self.username and self.password:
-                credentials_window.username_entry.set_text(self.username)
-                credentials_window.password_entry.set_text(self.password)
-
-            if self.ous == 'True':
-                credentials_window.ous_check.set_active(True)
-            else:
-                credentials_window.ous_check.set_active(False)
-    
-    def fetch_dexcom_data(self, time_scale_hours):
+    def fetch_dexcom_data(self, time_scale):
         if self.username is not None and self.password is not None:
             # Call get_glucose with the specified time scale
-            get_glucose(int(time_scale_hours)*60)
+            self.time_scale = time_scale
+            get_glucose(self.time_scale*60)
     
     def on_time_scale_changed(self, combo):
         # Get the selected time scale
