@@ -6,7 +6,7 @@ import gi
 import os
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Gdk, Adw, Gio, GLib
+from gi.repository import Gtk, Gdk, Adw, Gio, GLib, GdkPixbuf
 
 import dexShareCredentials
 import bgPlotter
@@ -110,7 +110,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
         self.about.set_website_label("DexViewer Github")
         self.about.set_version("1.0.0")
-        self.about.set_logo_icon_name("./Dexviewer_circle.png")
+        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./Dexviewer.png")
+        texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
+        self.about.set_logo(texture)
 
         self.about.set_visible(True)
     
