@@ -71,13 +71,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about = Gtk.AboutDialog()
         self.about.set_transient_for(self)
         self.about.set_modal(self)
+
         self.about.set_authors(["Narmis-E\n\nNot possible without the pydexcom API from gagebenne!"])
         self.about.set_copyright("Copyright 2023 Narmis Ecurb")
         self.about.set_license_type(Gtk.License.GPL_3_0)
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
         self.about.set_website_label("DexViewer Github")
         self.about.set_version("1.0.0")
-        self.about.set_logo_icon_name("Dexviewer.png")
+        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./Dexviewer.png")
+        texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
+        self.about.set_logo(texture)
+
         self.about.set_visible(True)
     
     def show_credentials(self):
