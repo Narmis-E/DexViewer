@@ -29,10 +29,8 @@ def get_glucose(time_scale):
     dexcom = Dexcom(username, password, ous)
     df = pd.DataFrame(columns=["BG", "TrendArrow"])
     bg = dexcom.get_glucose_readings(minutes=time_scale + 1)
-
     # Determine the expected number of data points based on time_scale
     expected_data_points = int(time_scale/5)
-
     for i in range(expected_data_points):
         if i < len(bg):
             bg_value = bg[i].mmol_l
@@ -41,7 +39,6 @@ def get_glucose(time_scale):
             # Set a placeholder value for offline data
             bg_value = ""
             trend_arrow = "?"
-
         # Create a new DataFrame with the current data point
         new_data = pd.DataFrame({"BG": [bg_value], "TrendArrow": [trend_arrow]})
         df = pd.concat([df, new_data], ignore_index=True)
@@ -109,6 +106,21 @@ class MainWindow(Gtk.ApplicationWindow):
         self.number_label.set_vexpand(True)
         self.number_label.set_justify(Gtk.Justification.CENTER)
         self.box3.append(self.number_label)
+    
+    def available_time_scales(self):
+        df = pd.read_csv("BG_data.csv")
+        available_scales = []
+
+        if len(df) >= 13:
+            available_scales.append("1 Hour")
+        if len(df) >= 37:
+            available_scales.append("3 Hours")
+        if len(df) >= 73:
+            available_scales.append("6 Hours")
+        if len(df) >= 145:
+            available_scales.append("12 Hours")
+
+        return available_scales
 
     def show_about(self, action, param):
         self.about = Gtk.AboutDialog()
@@ -143,7 +155,7 @@ class MainWindow(Gtk.ApplicationWindow):
         active_text = self.time_scale_combo.get_active_text()
         if username is not None and password is not None:
             if active_text == "1 Hour":
-                get_glucose(1*60)
+                get_glucose(60)
                 self.plotter.set_time_scale(1)
             elif active_text == "3 Hours":
                 get_glucose(3*60)
@@ -165,7 +177,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Update the plot based on the selected time scale
         if active_text == "1 Hour":
-            get_glucose(1*60)
+            get_glucose(60)
             self.plotter.set_time_scale(1)
         elif active_text == "3 Hours":
             get_glucose(3*60)
