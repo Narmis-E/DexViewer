@@ -4,9 +4,10 @@ import gi
 import os
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Gdk, Adw, Gio, GLib
+from gi.repository import Gtk, Gdk, Adw, Gio, GLib, GObject
 
 class DexShareCredentials(Gtk.ApplicationWindow):
+    credentials_provided_signal = GObject.Signal(flags=GObject.SignalFlags.RUN_FIRST, return_type=None)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_default_size(250, 150)
@@ -44,6 +45,8 @@ class DexShareCredentials(Gtk.ApplicationWindow):
         self.ous = str(self.ous_check.get_active())
         self.save_credentials_to_config()
         
+        # Emit the signal to indicate that credentials have been provided
+        self.emit("credentials-provided-signal")
         self.destroy()
 
     def on_exit_clicked(self, button):
@@ -70,7 +73,3 @@ class MyApp(Adw.Application):
     def on_activate(self, app):
         self.win = DexShareCredentials(application=app)
         self.win.present()
-
-if __name__ == "__main__":
-    app = MyApp(application_id="com.github.Narmis-E.DexViewer")
-    app.run(sys.argv)
