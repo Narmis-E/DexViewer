@@ -42,24 +42,19 @@ class BgPlotter(Gtk.Box):
             num_data_points = 72
             num_x_labels = 5
         elif self.time_scale_hours == 12:
-            num_data_points = 143
+            num_data_points = 144
             num_x_labels = 6
-      
+
         now = datetime.now()
         time_passed = [(now - timedelta(minutes=i * 5)).strftime('%I:%M %p') for i in range(num_data_points)]
 
-        # Reverse the list to display the time in ascending order
-        time_passed = time_passed[::-1]
-
-        # Get the corresponding BG data for the selected time scale
         bg_data = self.df['BG'].tail(num_data_points)
+        
+        time_passed = [time_passed[i] for i in range(len(time_passed))]
+        bg_data = [bg_data[i] for i in range(len(bg_data))]
         bg_data = bg_data[::-1]
-
-        non_placeholder_indices = bg_data != ''
-        time_passed = [time_passed[i] for i in range(len(time_passed)) if non_placeholder_indices[i]]
-        bg_data = [bg_data[i] for i in range(len(bg_data)) if non_placeholder_indices[i]]
-
-        # Plot the filtered BG data using the calculated time passed as x-axis
+        time_passed = time_passed[::-1]
+        # Plot the BG data using the calculated time passed as x-axis
         self.scatter = self.ax.scatter(time_passed, bg_data, marker='o', zorder=2)
         step = max(1, len(time_passed) // num_x_labels)
         self.ax.set_xticks(time_passed[::step])
@@ -86,3 +81,4 @@ class BgPlotter(Gtk.Box):
 
     def load_data(self):
         self.df = pd.read_csv("BG_data.csv")
+        return len(self.df)
