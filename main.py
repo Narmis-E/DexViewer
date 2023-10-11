@@ -1,8 +1,5 @@
 import os
 import sys
-import home
-import dexViewer
-
 from home import Home
 from dexViewer import Viewer
 
