@@ -72,7 +72,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about.set_transient_for(self)
         self.about.set_modal(self)
 
-        self.about.set_authors(["Narmis-E\n\nNot possible without the pydexcom API from gagebenne!"])
+        self.about.set_authors(["Narmis-E - Not possible without the pydexcom API from gagebenne!"])
         self.about.set_copyright("Copyright 2023 Narmis Ecurb")
         self.about.set_license_type(Gtk.License.GPL_3_0)
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
