@@ -93,10 +93,19 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             credentials_window.ous_check.set_active(False)
 
+    def on_credentials_provided(self, widget, data=None):
+        credentials_window.destroy()
+        self.destroy()
+        # Credentials have been provided, open the Viewer window
+        viewer_app = dexViewer.Viewer(application_id="com.github.Narmis-E.DexViewer")
+        viewer_app.run(sys.argv)
+
     def on_delete_event(self, event):
         Gtk.Application.get_default().quit()
-        
+
     def on_add_share_source_clicked(self, button):
+        # Present the credentials window to get user input
+        credentials_window.connect(credentials_window.credentials_provided_signal, self.on_credentials_provided)
         credentials_window.present()
     
     def apply_css(self):
