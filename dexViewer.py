@@ -26,17 +26,28 @@ def load_credentials():
     return None, None, None
 
 def get_glucose(time_scale):
-    dexcom = Dexcom(username, password, ous) # add ous=True if outside of US
+    dexcom = Dexcom(username, password, ous)
     df = pd.DataFrame(columns=["BG", "TrendArrow"])
-    bg = dexcom.get_glucose_readings(minutes=time_scale+1)
-    for reading in bg: # loop for the amount of rows of data
-        bg_value = reading.mmol_l
-        trend_arrow = reading.trend_arrow
+    bg = dexcom.get_glucose_readings(minutes=time_scale + 1)
+
+    # Determine the expected number of data points based on time_scale
+    expected_data_points = int(time_scale/5)
+
+    for i in range(expected_data_points):
+        if i < len(bg):
+            bg_value = bg[i].mmol_l
+            trend_arrow = bg[i].trend_arrow
+        else:
+            # Set a placeholder value for offline data
+            bg_value = ""
+            trend_arrow = "?"
+
         # Create a new DataFrame with the current data point
         new_data = pd.DataFrame({"BG": [bg_value], "TrendArrow": [trend_arrow]})
         df = pd.concat([df, new_data], ignore_index=True)
-    df.to_csv("BG_data.csv", index=False)
 
+    df.to_csv("BG_data.csv", index=False)
+    
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,7 +115,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about.set_transient_for(self)
         self.about.set_modal(self)
 
-        self.about.set_authors(["Narmis-E\n\nNot possible without the pydexcom API from gagebenne!"])
+        self.about.set_authors(["Narmis-E - Not possible without the pydexcom API from gagebenne!"])
         self.about.set_copyright("Copyright 2023 Narmis Ecurb")
         self.about.set_license_type(Gtk.License.GPL_3_0)
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
