@@ -22,7 +22,7 @@ setup(
     },
     classifiers=[
       "Intended Audience :: End Users/Desktop",
-      "License :: GNU General Public License v3 (GPLv3)",
+      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
       "Operating System :: POSIX :: Linux",
       "Programming Language :: Python :: 3",
       "Topic :: Desktop Environment",
