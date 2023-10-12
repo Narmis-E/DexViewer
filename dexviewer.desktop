@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=DexViewer
 Exec=dexviewer
-Icon=~/.local/share/dexviewer/dexviewer.png
+Icon=dexviewer
 Type=Application
 Categories=Utility;
 Comment=A GTK-4 application for viewing Dexcom CGM data from the pydexcom API
-Terminal=false
+Terminal=true
