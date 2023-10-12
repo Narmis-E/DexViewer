@@ -6,7 +6,7 @@ import gi
 import os
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Gdk, Adw, Gio, GLib, GdkPixbuf
+from gi.repository import Gtk, Gdk, Adw, Gio, GLib, GdkPixbuf, Pango
 
 import dexShareCredentials
 import bgPlotter
@@ -44,6 +44,11 @@ def get_glucose(time_scale):
         df = pd.concat([df, new_data], ignore_index=True)
 
     df.to_csv("BG_data.csv", index=False)
+    global latest_bg, latest_trend_arrow
+    
+    latest_bg = dexcom.get_latest_glucose_reading()
+    latest_trend_arrow = latest_bg.trend_arrow
+    latest_bg = latest_bg.mmol_l
     
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
@@ -89,6 +94,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.box1.append(self.box2)
         self.box1.append(self.box3)
         
+        self.plotter = bgPlotter.BgPlotter()
+        self.box2.append(self.plotter.canvas)
+
+        self.grid = Gtk.Grid()
+        self.box3.append(self.grid)
+        
         self.time_scale_combo = Gtk.ComboBoxText()
         self.time_scale_combo.append("0", "1 Hour")
         self.time_scale_combo.append("1", "3 Hours")
@@ -96,32 +107,37 @@ class MainWindow(Gtk.ApplicationWindow):
         self.time_scale_combo.append("3","12 Hours")
         self.time_scale_combo.set_active(1)
         self.time_scale_combo.connect("changed", self.on_time_scale_changed)
-        self.box3.append(self.time_scale_combo)
         
-        self.plotter = bgPlotter.BgPlotter()
-        self.box2.append(self.plotter.canvas)
+        combo_box_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        combo_box_box.set_hexpand(False)
+        combo_box_box.set_margin_bottom(8)
+        combo_box_box.set_margin_start(8)
+        combo_box_box.set_margin_end(8)
 
-        self.number_label = Gtk.Label(label="5.5")
-        self.number_label.set_hexpand(True)
-        self.number_label.set_vexpand(True)
-        self.number_label.set_justify(Gtk.Justification.CENTER)
-        self.box3.append(self.number_label)
-    
-    def available_time_scales(self):
-        df = pd.read_csv("BG_data.csv")
-        available_scales = []
+        combo_box_box.append(self.time_scale_combo)
+        self.grid.attach(combo_box_box, 0, 4, 1, 1)
+        
+        # Create a label for BG value with larger font size and bold
+        self.bg_label = Gtk.Label(label=latest_bg)
+        self.bg_label.set_hexpand(True)
+        self.bg_label.set_vexpand(True)
+        self.bg_label.set_justify(Gtk.Justification.CENTER)
+        self.bg_label.set_valign(Gtk.Align.END)  # Align to the top
+        self.grid.attach(self.bg_label, 0, 2, 1, 1)
+        
+        self.trend_label = Gtk.Label(label=latest_trend_arrow)
+        self.trend_label.set_hexpand(True)
+        self.trend_label.set_vexpand(True)
+        self.trend_label.set_justify(Gtk.Justification.CENTER)
+        self.trend_label.set_valign(Gtk.Align.START)  # Align to the top
+        self.grid.attach(self.trend_label, 0, 3, 1, 1)
+        
+        self.update_labels()
 
-        if len(df) >= 13:
-            available_scales.append("1 Hour")
-        if len(df) >= 37:
-            available_scales.append("3 Hours")
-        if len(df) >= 73:
-            available_scales.append("6 Hours")
-        if len(df) >= 145:
-            available_scales.append("12 Hours")
-
-        return available_scales
-
+    def update_labels(self):
+        self.bg_label.set_markup(f'<span size="xx-large" weight="bold">{latest_bg}</span>')
+        self.trend_label.set_markup(f'<span size="xx-large" weight="bold">{latest_trend_arrow}</span>')
+        
     def show_about(self, action, param):
         self.about = Gtk.AboutDialog()
         self.about.set_transient_for(self)
@@ -166,6 +182,7 @@ class MainWindow(Gtk.ApplicationWindow):
             elif active_text == "12 Hours":
                 get_glucose(12*60)
                 self.plotter.set_time_scale(12)
+        self.update_labels()
         print("Synchronised Blood Glucose")
         
     def on_add_share_source_clicked(self, button):
