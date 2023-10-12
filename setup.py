@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="dexviewer",
     version="1.0.0",
-    description="A GTK-4 interface for viewing Dexcom CGM data from the pydexcom APIs",
+    description="A GTK-4 interface for viewing Dexcom CGM data from the pydexcom API",
     author="Narmis-E",
     author_email="narmisecurb@gmail.com",
     url="https://github.com/narmis-e/DexViewer",
