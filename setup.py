@@ -28,5 +28,6 @@ setup(
       "Topic :: Desktop Environment",
       "Topic :: Utilities",
     ],
+    scripts=['setup_dexviewer.sh'],
     license="GPLv3",
 )
