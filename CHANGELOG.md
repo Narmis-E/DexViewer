@@ -1,4 +1,10 @@
-## About Release 1.0.1:
+## About Version 1.0.2:
+Fixed a mistake with the icon path for every icon in dexviewer.py. the 'about' section
+and home window should now be correctly displayed. Also fixed the .desktop file so that
+GNOME users can see it and pin it to their dash. This should work across all GNOME based
+DEs. 
+
+## About Version 1.0.1:
 
 This is an initial release in the spirit of "release early, release often".\
 Using version 1.0.1 because I had a skill issue with PyPI and now can't use 1.0.0.
