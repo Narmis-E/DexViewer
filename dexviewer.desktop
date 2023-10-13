@@ -1,8 +1,11 @@
 [Desktop Entry]
-Name=DexViewer
-Exec=dexviewer
-Icon=dexviewer
+Encoding=UTF-8
+Version=1.0.1
 Type=Application
+Terminal=false
+Exec=sh -e -c "/home/$(whoami)/.local/bin/dexviewer\"
+Name=DexViewer
+Icon=/usr/share/icons/hicolor/scalable/apps/dexviewer.svg
 Categories=Utility;
 Comment=A GTK-4 application for viewing Dexcom CGM data from the pydexcom API
-Terminal=true
+StartupNotify=true
