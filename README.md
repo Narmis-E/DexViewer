@@ -35,6 +35,7 @@ and run it from the terminal:
 ```
 dexviewer
 ```
+See the pip page here: https://pypi.org/project/dexviewer/
 
 #### If you wish to install from source, please clone this respository:
 ```
@@ -55,7 +56,7 @@ sudo setup_dexviewer.py
 
 ## Compatibility
 As far as I am aware, DexViewer should be able to provide data through the pydexcom api for sensors which have the Dexcom Share functionality, which are the G4, G5, G6 (as listed on the [pydexcom github](https://github.com/gagebenne/pydexcom)) and G7 ([maybe?](https://github.com/gagebenne/pydexcom/issues/55)). 
-Currently I only have access to a G6 sensor so I cannot confirm functionality for the other two.
+Currently I only have access to a G6 sensor so I cannot confirm functionality for the other sensors.
 
 If you want to learn more about the pydexcom api, please read through the informative documentation provided by gagebene [here](https://gagebenne.github.io/pydexcom/pydexcom.html).
 
