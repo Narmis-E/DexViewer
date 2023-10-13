@@ -3,3 +3,4 @@ BG_data.csv
 config.ini
 dexviewer.egg-info
 dist
+build
