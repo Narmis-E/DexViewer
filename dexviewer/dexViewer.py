@@ -69,7 +69,7 @@ def get_glucose(time_scale):
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_default_icon_name("dexviewer/data/icons/dexviewer.png")
+        self.set_default_icon_name("./dexviewer/data/icons/dexviewer.png")
         apply_css()
         self.set_default_size(800, 400)
         self.set_title("DexViewer")
@@ -162,7 +162,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
         self.about.set_website_label("DexViewer Github")
         self.about.set_version("1.0.1")
-        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("dexviewer/data/icons/dexviewer.png")
+        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./dexviewer/data/icons/dexviewer.png")
         texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
         self.about.set_logo(texture)
 
@@ -225,7 +225,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         directory = os.path.expanduser("~/.local/share/dexviewer/")
         if not os.path.exists(directory):
             os.makedirs(directory)
-        self.set_default_icon_name("dexviewer/data/icons/dexviewer.png")
+        self.set_default_icon_name("./dexviewer/data/icons/dexviewer.png")
         apply_css()
         self.set_default_size(800, 400)
         self.set_title("DexViewer")
@@ -269,7 +269,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.grid.set_valign(Gtk.Align.CENTER)
 
         self.image = Gtk.Image()
-        self.image.set_from_file("dexviewer/data/icons/dexviewer.png")
+        self.image.set_from_file("./dexviewer/data/icons/dexviewer.png")
         self.image.set_size_request(128, 128)
         self.title_label = Gtk.Label(label="DexViewer v1.0.1")
         self.title_label.set_hexpand(True)
@@ -289,7 +289,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.about.set_website("http://github.com/Narmis-E/DexViewer")
         self.about.set_website_label("DexViewer Github")
         self.about.set_version("1.0.1")
-        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("dexviewer/data/icons/dexviewer.png")
+        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./dexviewer/data/icons/dexviewer.png")
         texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
         self.about.set_logo(texture)
 
