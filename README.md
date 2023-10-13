@@ -46,7 +46,7 @@ then pip install in the current directory:
 pip install .
 ```
 #### Note:
-If you want to run Dexviewer from a GUI (GNOME launcher, rofi, etc) run the `setup_dexviewer.sh` script which is provided in your local $PATH on install:
+If you want to run Dexviewer from a GUI (GNOME app menu, rofi, etc) run the `setup_dexviewer.sh` script which is provided in your local $PATH on install:
 
 ```
 sudo setup_dexviewer.py
