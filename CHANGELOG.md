@@ -1,9 +1,10 @@
-## About Release 1.0.0:
+## About Release 1.0.1:
 
 This is an initial release in the spirit of "release early, release often".\
+Using version 1.0.1 because I had a skill issue with PyPI and now can't use 1.0.0.
 Currently the interface can retrieve the past 1, 3, 6 and 12 hours of BG data.\
 Dexviewer is currently limited for 1 user and has no option to change users 
-on the fly, something planned for 1.1.0.\
+on the fly, something planned for 1.1.x.\
 Also planned for near future updates is functionality for live updating, as
 currently Dexviewer only displays static timeframes with the exception of the sync glucose function.
 
