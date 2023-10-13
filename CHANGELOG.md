@@ -7,6 +7,8 @@ on the fly, something planned for 1.1.0.\
 Also planned for near future updates is functionality for live updating, as
 currently Dexviewer only displays static timeframes with the exception of the sync glucose function.
 
+<hr>
+
 ### Versioning explanation:
 
 Dexviewer will take after the semantic versioning scheme proposed by https://semver.org, as I believe
@@ -14,3 +16,15 @@ it best reflects the changes made to Dexviewer with an x.y.z format
 (x = major change, y = minor change and z = bugfix). I doubt there will ever be a X.y.z change,
 as Dexiewer will most likely not be written in another toolkit, nor will it likely be updated to future versions
 of GTK. I expect there will be many x.Y.Z version changes however.
+
+### DexViewer
+
+This changelog documents the changes and updates to DexViewer, 
+a GTK-4 interface for viewing Dexcom CGM data from the pydexcom API.
+
+Avove, you'll find a list of versions and their respective changes, 
+including new features, improvements, bug fixes, and any other 
+significant modifications made to the application. 
+Stay updated with the latest enhancements and bug resolutions in DexViewer through this changelog.
+
+<hr>
