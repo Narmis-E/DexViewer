@@ -1,4 +1,4 @@
-<img src="./dexviewer.svg" align="right" width="186"/>
+<img src="dexviewer/data/icons/dexviewer.svg" align="right" width="186"/>
 
 # DexViewer [![Please do not theme this app](https://stopthemingmy.app/badge.svg)](https://stopthemingmy.app)
 
