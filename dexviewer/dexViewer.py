@@ -13,19 +13,44 @@ import dexviewer.bgPlotter
 from dexviewer.utils import *
 
 credentials_window = dexviewer.dexShareCredentials.DexShareCredentials()
+logo = get_logo()
 
 class Viewer(Adw.Application):
+    GLib.set_application_name("DexViewer")
+    
+    @staticmethod
+    def switch_to_home_window():
+        # Switch to the home window
+        if Viewer.viewer_window:
+            Viewer.viewer_window.destroy()
+        Viewer.home_window = HomeWindow(application=Viewer.application)
+        Viewer.home_window.present()
+    
+    @staticmethod
+    def switch_to_viewer_window():
+        # Switch to the viewer window
+        if Viewer.home_window:
+            Viewer.home_window.destroy()
+        Viewer.viewer_window = MainWindow(application=Viewer.application)
+        Viewer.viewer_window.present()
+    
     def __init__(self, flag, **kwargs):
         super().__init__(**kwargs)
         self.connect('activate', self.on_activate)
+        Viewer.home_window = None
+        Viewer.viewer_window = None
+        Viewer.application = self  # Store the application instance
+        self.current_window = None  # Initially, no window is shown
         self.flag = flag
+
     def on_activate(self, app):
-        if self.flag == 1:
-            self.win = HomeWindow(application=app)
-        else:
-            self.win = MainWindow(application=app)
-        GLib.set_application_name("DexViewer")
-        self.win.present()
+        if self.current_window is None:
+            if self.flag == 1:
+                # Show the HomeWindow by default
+                Viewer.switch_to_home_window()
+            else:
+                Viewer.switch_to_viewer_window()
+            
 
 def load_credentials():
     config_exists = os.path.isfile(os.path.expanduser("~/.local/share/dexviewer/config.ini"))
@@ -69,10 +94,10 @@ def get_glucose(time_scale):
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_default_icon_name("./dexviewer/data/icons/dexviewer.png")
+        self.set_default_icon_name(logo)
         apply_css()
         self.set_default_size(800, 400)
-        self.set_title("DexViewer")
+        self.set_title("DexViewer | Viewer")
         self.connect("close-request", self.on_delete_event)
         username, password, ous = load_credentials()
         get_glucose(3*60)
@@ -91,9 +116,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.header.pack_end(self.menu_button)        
 
         action = Gio.SimpleAction.new("about", None)
-        action.connect("activate", self.show_about)
+        action.connect("activate", show_about, self)
         self.add_action(action)
         menu.append("About", "win.about")
+        
+        action = Gio.SimpleAction.new("stop", None)
+        action.connect("activate", self.stop_viewer)
+        self.add_action(action)
+        menu.append("Change Accounts", "win.stop")
         
         self.add_share_source = Gtk.Button(label="Sync")
         self.add_share_source.add_css_class('sync_glucose')
@@ -146,36 +176,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid.attach(self.trend_label, 0, 3, 1, 1)
         
         self.update_labels()
+    
+    def stop_viewer(self, action, param):
+        config_exists = os.path.isfile(os.path.expanduser("~/.local/share/dexviewer/config.ini"))
+        if config_exists:
+            os.remove(os.path.expanduser("~/.local/share/dexviewer/config.ini"))
+            print("config.ini removed")
+        Viewer.switch_to_home_window()
 
     def update_labels(self):
         self.bg_label.set_markup(f'<span size="xx-large" weight="bold">{latest_bg}</span>')
         self.trend_label.set_markup(f'<span size="xx-large" weight="bold">{latest_trend_arrow}</span>')
-        
-    def show_about(self, action, param):
-        self.about = Gtk.AboutDialog()
-        self.about.set_transient_for(self)
-        self.about.set_modal(self)
-
-        self.about.set_authors(["Narmis-E - Not possible without the pydexcom API from gagebenne!"])
-        self.about.set_copyright("Copyright 2023 Narmis Ecurb")
-        self.about.set_license_type(Gtk.License.GPL_3_0)
-        self.about.set_website("http://github.com/Narmis-E/DexViewer")
-        self.about.set_website_label("DexViewer Github")
-        self.about.set_version("1.0.2")
-        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./dexviewer/data/icons/dexviewer.png")
-        texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
-        self.about.set_logo(texture)
-
-        self.about.set_visible(True)
-    
-    def show_credentials(self):
-        if username and password:
-            credentials_window.username_entry.set_text(username)
-            credentials_window.password_entry.set_text(password)
-        if ous == 'True':
-            credentials_window.ous_check.set_active(True)
-        else:
-            credentials_window.ous_check.set_active(False)
 
     def on_delete_event(self, event):
         Gtk.Application.get_default().quit()
@@ -225,10 +236,10 @@ class HomeWindow(Gtk.ApplicationWindow):
         directory = os.path.expanduser("~/.local/share/dexviewer/")
         if not os.path.exists(directory):
             os.makedirs(directory)
-        self.set_default_icon_name("./dexviewer/data/icons/dexviewer.png")
+        self.set_default_icon_name(logo)
         apply_css()
         self.set_default_size(800, 400)
-        self.set_title("DexViewer")
+        self.set_title("DexViewer | Home")
         self.connect("close-request", self.on_delete_event)
         
         self.header = Gtk.HeaderBar()
@@ -246,7 +257,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.header.pack_end(self.menu_button)
 
         action = Gio.SimpleAction.new("about", None)
-        action.connect("activate", self.show_about)
+        action.connect("activate", show_about, self)
         self.add_action(action)
         menu.append("About", "win.about")
         
@@ -269,7 +280,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.grid.set_valign(Gtk.Align.CENTER)
 
         self.image = Gtk.Image()
-        self.image.set_from_file("./dexviewer/data/icons/dexviewer.png")
+        self.image.set_from_file(logo)
         self.image.set_size_request(128, 128)
         self.title_label = Gtk.Label(label="DexViewer v1.0.2")
         self.title_label.set_hexpand(True)
@@ -277,23 +288,6 @@ class HomeWindow(Gtk.ApplicationWindow):
 
         self.grid.attach(self.image, 0, 0, 1, 1)
         self.grid.attach(self.title_label, 0, 1, 1, 1)
-
-    def show_about(self, action, param):
-        self.about = Gtk.AboutDialog()
-        self.about.set_transient_for(self)
-        self.about.set_modal(self)
-
-        self.about.set_authors(["Narmis-E - Not possible without the pydexcom API from gagebenne!"])
-        self.about.set_copyright("Copyright 2023 Narmis Ecurb")
-        self.about.set_license_type(Gtk.License.GPL_3_0)
-        self.about.set_website("http://github.com/Narmis-E/DexViewer")
-        self.about.set_website_label("DexViewer Github")
-        self.about.set_version("1.0.2")
-        logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file("./dexviewer/data/icons/dexviewer.png")
-        texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
-        self.about.set_logo(texture)
-
-        self.about.set_visible(True)
     
     def show_credentials(self):
         if username and password:
@@ -307,17 +301,17 @@ class HomeWindow(Gtk.ApplicationWindow):
     def on_credentials_provided(self, widget, data=None):
         credentials_window.destroy()
         self.hide()
-        viewer = Viewer(flag=0)  # Create a Viewer window with flag 2 to indicate it's not the HomeWindow
-        viewer.run()
+        Viewer.switch_to_viewer_window()
 
     def on_delete_event(self, event):
         Gtk.Application.get_default().quit()
 
     def on_add_share_source_clicked(self, button):
+        credentials_window = dexviewer.dexShareCredentials.DexShareCredentials()
         # Present the credentials window to get user input
         credentials_window.connect(credentials_window.credentials_provided_signal, self.on_credentials_provided)
         credentials_window.present()
-
+        
 def main(flag):
     app = Viewer(application_id="com.github.Narmis-E.DexViewer", flag=flag)
     app.run(sys.argv)
