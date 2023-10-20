@@ -6,24 +6,15 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-svg=""
-desktop=""
+# Search for svg and .desktop files in the user's home directory
+svg_path=$(find "/home/`sh -c 'echo $SUDO_USER'`/.local/lib" -name "dexviewer.svg" | head -n 1)
+desktop_path=$(find "/home/`sh -c 'echo $SUDO_USER'`/.local/lib" -name "dexviewer.desktop" | head -n 1)
 
-if svg_path=$(plocate --limit 1 dexviewer/data/icons/dexviewer.svg); then
-    svg="$svg_path"
-    echo "Found svg at $svg"
-fi
-
-if desktop_path=$(plocate --limit 1 dexviewer/data/dexviewer.desktop); then
-    desktop="$desktop_path"
-    echo "Found .desktop at $desktop"
-fi
-
-if [ -z "$svg" ] || [ -z "$desktop" ]; then
-    echo "Could not locate dexviewer.png or dexviewer.desktop files. Make sure they are installed."
+if [ -z "$svg_path" ] || [ -z "$desktop_path" ]; then
+    echo "Could not locate dexviewer.svg or dexviewer.desktop files in the user's home directory."
     exit 1
 fi
 
-cp "$svg" /usr/share/icons/hicolor/scalable/apps/
-cp "$desktop" /usr/share/applications
+cp "$svg_path" /usr/share/icons/hicolor/scalable/apps/
+cp "$desktop_path" /usr/share/applications
 echo "Copied logo and .desktop file. You can now use your GUI to run dexviewer."
