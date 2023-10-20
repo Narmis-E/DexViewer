@@ -50,7 +50,6 @@ class Viewer(Adw.Application):
                 Viewer.switch_to_home_window()
             else:
                 Viewer.switch_to_viewer_window()
-            
 
 def load_credentials():
     config_exists = os.path.isfile(os.path.expanduser("~/.local/share/dexviewer/config.ini"))
@@ -282,7 +281,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.image = Gtk.Image()
         self.image.set_from_file(logo)
         self.image.set_size_request(128, 128)
-        self.title_label = Gtk.Label(label="DexViewer v1.0.2")
+        self.title_label = Gtk.Label(label="DexViewer v1.0.3")
         self.title_label.set_hexpand(True)
         self.title_label.set_justify(Gtk.Justification.CENTER)
 

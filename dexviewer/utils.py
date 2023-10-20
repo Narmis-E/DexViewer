@@ -31,7 +31,7 @@ def show_about(action, param, window):
     about.set_license_type(Gtk.License.GPL_3_0)
     about.set_website("http://github.com/Narmis-E/DexViewer")
     about.set_website_label("DexViewer Github")
-    about.set_version("1.0.2")
+    about.set_version("1.0.3")
     logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file(get_logo())
     texture = Gdk.Texture.new_for_pixbuf(logo_pixbuf)
     about.set_logo(texture)
