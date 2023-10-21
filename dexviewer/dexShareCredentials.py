@@ -10,7 +10,7 @@ class DexShareCredentials(Gtk.ApplicationWindow):
     credentials_provided_signal = GObject.Signal(flags=GObject.SignalFlags.RUN_FIRST, return_type=None)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_default_size(250, 150)
+        self.set_default_size(300, 200)
         self.set_resizable(False)
         self.set_modal(True)
 
@@ -55,12 +55,16 @@ class DexShareCredentials(Gtk.ApplicationWindow):
     def save_credentials_to_config(self):
         config = configparser.ConfigParser()
         config.read(os.path.expanduser("~/.local/share/dexviewer/config.ini"))
-        if 'Credentials' not in config:
-            config['Credentials'] = {}
+        if 'Details' not in config:
+            config['Details'] = {}
 
-        config['Credentials']['Username'] = self.username
-        config['Credentials']['Password'] = self.password
-        config['Credentials']['ous'] = self.ous
+        config['Details']['Username'] = self.username
+        config['Details']['Password'] = self.password
+        config['Details']['ous'] = self.ous
+        if self.ous == 'True':
+            config['Details']['units'] = 'mmol/l'
+        else:
+            config['Details']['units'] = 'mg/dl'
         with open(os.path.expanduser("~/.local/share/dexviewer/config.ini"), 'w') as configfile:
             config.write(configfile)
         return self.username, self.password, self.ous
