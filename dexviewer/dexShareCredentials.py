@@ -96,7 +96,7 @@ class DexShareCredentials(Gtk.ApplicationWindow):
 
         # Emit the signal to indicate that credentials have been provided
         self.emit("credentials-provided-signal")
-        #self.destroy()
+        self.destroy()
 
     def on_exit_clicked(self, button):
         self.destroy()
