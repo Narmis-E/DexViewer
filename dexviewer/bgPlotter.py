@@ -9,11 +9,12 @@ from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
 
 class BgPlotter(Gtk.Box):
-    def __init__(self):
+    def __init__(self, units):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
         self.current_time = datetime.now()
         self.time_scale_hours = 3
         self.load_data()
+        self.units = units
         
         self.fig, self.ax = plt.subplots()
         self.ax.yaxis.tick_right()
@@ -22,6 +23,10 @@ class BgPlotter(Gtk.Box):
         self.canvas.set_size_request(600, 400)
 
         self.graph_decor()
+        self.update_plot()
+    
+    def change_units(self, units):
+        self.units = units  # Update the units
         self.update_plot()
 
     def set_time_scale(self, time_scale_hours):
@@ -63,11 +68,16 @@ class BgPlotter(Gtk.Box):
         self.canvas.draw()
 
     def graph_decor(self):
-        # Create a Rectangle patch for the background
-        self.low_bg_background = Rectangle((self.ax.get_xlim()[0], 0), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 4.2, fc='lightcoral', alpha=0.5)
-        self.bg_background = Rectangle((self.ax.get_xlim()[0], 4.4), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 5.35, fc='lightgrey', alpha=0.5)
-        self.high_bg_background = Rectangle((self.ax.get_xlim()[0], 10), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 16, fc='lightgoldenrodyellow', alpha=0.5)
-        self.custom_yticks = [2, 6, 10, 14, 16]
+        if self.units == 'mmol/l':
+            self.low_bg_background = Rectangle((self.ax.get_xlim()[0], 0), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 4.2, fc='lightcoral', alpha=0.5)
+            self.bg_background = Rectangle((self.ax.get_xlim()[0], 4.4), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 5.35, fc='lightgrey', alpha=0.5)
+            self.high_bg_background = Rectangle((self.ax.get_xlim()[0], 10), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 16, fc='lightgoldenrodyellow', alpha=0.5)
+            self.custom_yticks = [2, 6, 10, 14, 16]
+        else:
+            self.low_bg_background = Rectangle((self.ax.get_xlim()[0], 0), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 75, fc='lightcoral', alpha=0.5)
+            self.bg_background = Rectangle((self.ax.get_xlim()[0], 79), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 95, fc='lightgrey', alpha=0.5)
+            self.high_bg_background = Rectangle((self.ax.get_xlim()[0], 180), self.ax.get_xlim()[1] - self.ax.get_xlim()[0], 288, fc='lightgoldenrodyellow', alpha=0.5)
+            self.custom_yticks = [36, 106, 180, 252, 288]
         self.ax.set_yticks(self.custom_yticks)
         self.ax.spines['left'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
