@@ -81,10 +81,10 @@ but I will still fly the 'pls dont theme' badge to let people know it will and d
 (embedding a matplotlib canvas with a white background does not mix well with many GTK themes!).  
 
 ## TODO
-- [ ] Move unit switching + light and dark mode toggle in preeferences window?
-- [ ] Implement unit swicthing between mmol/l and mg/dl
-- [ ] Implement live account switching
+- [x] Implement unit swicthing between mmol/l and mg/dl
+- [ ] light and dark mode toggle in preferences window
+- [ ] Decrease data load times?
+- [x] Implement account switching
 - [ ] implement real time data
 - [ ] flatpak / other packages
-- [ ] Decrease data load times?
 
