@@ -1,3 +1,10 @@
+## About Version 1.1.0:
+This version adds the ability to hotswitch blood glucose units for countries which use
+mg/dl (previously mmol/l was the only unit.) The units can now be toggled in the preferences
+window, accessible from the menu. This version also introduces error handling for 
+Dexcom SHARE credentials, along with a show password toggle. New features which would require
+a new window can now probably move to this preferences window (e.g a dark mode toggle).
+
 ## About Version 1.0.3:
 Fixed the setup script to correctly find the svg and .desktop file.
 Dexviewer now correctly changes from the viewer to the home window.
@@ -27,6 +34,8 @@ it best reflects the changes made to Dexviewer with an x.y.z format
 (x = major change, y = minor change and z = bugfix). I doubt there will ever be a X.y.z change,
 as Dexiewer will most likely not be written in another toolkit, nor will it likely be updated to future versions
 of GTK. I expect there will be many x.Y.Z version changes however.
+I understand how applications should start at 0.1.0, being the first implementation, but as this application
+is fairly small in scope and functionality, I think it wont be necessary.
 
 ### DexViewer
 This changelog documents the changes and updates to DexViewer, 
