@@ -1,3 +1,7 @@
+## About Version 1.2.0:
+Wanted to push out this version as quickly as I could after noticing a silly issue I left in from testing which broke the credentials window with the dialog. This version also reduces the program launch time, and is something I am very much prioritising. This also integrates a dark mode toggle in the preferences window.
+Hopefully future versions will provide even quicker launch times, however the next thing I wish to implement is live data retrieval (maybe using a cron job or some other alternative?).
+
 ## About Version 1.1.0:
 This version adds the ability to hotswitch blood glucose units for countries which use
 mg/dl (previously mmol/l was the only unit.) The units can now be toggled in the preferences
