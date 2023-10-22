@@ -4,6 +4,7 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
 import pandas as pd
 from datetime import datetime, timedelta
+import pkg_resources
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
@@ -18,11 +19,24 @@ class BgPlotter(Gtk.Box):
         
         self.fig, self.ax = plt.subplots()
         self.ax.yaxis.tick_right()
-        self.fig.subplots_adjust(left=0.039, top=0.97, right=0.95, bottom=0.08)
+        self.fig.subplots_adjust(left=0.03, top=0.97, right=0.94, bottom=0.08)
         self.canvas = FigureCanvas(self.fig)
         self.canvas.set_size_request(600, 400)
 
         self.graph_decor()
+        self.update_plot()
+    
+    def dark_mode_toggle(self):
+        self.ax.tick_params(colors='white', which='both')
+        self.fig.set_facecolor('#2a2a2a')
+        self.ax.set_facecolor('#2a2a2a')
+        self.update_plot()
+    
+    def light_mode_toggle(self):
+        plt.style.use('default')
+        self.fig.set_facecolor('#FFFFFF')
+        self.ax.set_facecolor('#FFFFFF')
+        self.ax.tick_params(colors='black', which='both')
         self.update_plot()
     
     def change_units(self, units):
