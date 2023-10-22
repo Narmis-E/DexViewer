@@ -321,7 +321,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         image = Gtk.Image()
         image.set_from_file(get_logo())
         image.set_size_request(128, 128)
-        title_label = Gtk.Label(label="DexViewer v1.1.0")
+        title_label = Gtk.Label(label="DexViewer v1.2.0")
         title_label.set_hexpand(True)
         title_label.set_justify(Gtk.Justification.CENTER)
 
