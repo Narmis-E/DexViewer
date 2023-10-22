@@ -82,10 +82,10 @@ but I will still fly the 'pls dont theme' badge to let people know it will and d
 
 ## TODO
 - [x] Implement unit swicthing between mmol/l and mg/dl
-- [ ] Light and dark mode toggle in preferences window
-- [ ] Decrease data load times?
+- [x] Light and dark mode toggle in preferences window
+- [x] Decrease data load times?
 - [x] Implement account switching
 - [ ] Implement real time data
 - [ ] Package for flatpak
-- [ ] NightScout Integration? 
+- [ ] NightScout integration? 
 
