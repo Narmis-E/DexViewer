@@ -1,6 +1,7 @@
 from pydexcom import Dexcom
 import pandas as pd
 import configparser
+import threading
 import sys
 import gi
 import os
@@ -8,17 +9,12 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Gdk, Adw, Gio, GLib, GdkPixbuf, Pango
 
-import dexviewer.dexShareCredentials
-import dexviewer.bgPlotter
-from dexviewer.utils import *
-
-credentials_window = dexviewer.dexShareCredentials.DexShareCredentials()
-logo = get_logo()
+from dexviewer.utils import get_logo, apply_css, show_about
 
 class Viewer(Adw.Application):
     GLib.set_application_name("DexViewer")
-    
     @staticmethod
+
     def switch_to_home_window():
         # Switch to the home window
         if Viewer.viewer_window:
@@ -39,14 +35,13 @@ class Viewer(Adw.Application):
         self.connect('activate', self.on_activate)
         Viewer.home_window = None
         Viewer.viewer_window = None
-        Viewer.application = self  # Store the application instance
-        self.current_window = None  # Initially, no window is shown
+        Viewer.application = self
+        self.current_window = None
         self.flag = flag
 
     def on_activate(self, app):
         if self.current_window is None:
             if self.flag == 1:
-                # Show the HomeWindow by default
                 Viewer.switch_to_home_window()
             else:
                 Viewer.switch_to_viewer_window()
@@ -64,73 +59,62 @@ def load_credentials():
             units = config['Details'].get('units', '')
             #print(f"Loaded credentials for {username}")
             return username, password, ous, units
-    return None, None, None, None
 
 def get_glucose(time_scale):
-    ### Loading in the credentials here for the unit change. Will probably be fixed sometime if there are probelms with this method.
     username, password, ous, units = load_credentials()
     dexcom = Dexcom(username, password, ous)
-    df = pd.DataFrame(columns=["BG", "TrendArrow"])
     bg = dexcom.get_glucose_readings(minutes=time_scale + 1)
-    # Determine the expected number of data points based on time_scale
-    expected_data_points = int(time_scale/5)
-    if units == 'mmol/l':
-        for i in range(expected_data_points):
-            if i < len(bg):
+    glucose_data = []
+    expected_data_points = int(time_scale / 5)
+    for i in range(expected_data_points):
+        if i < len(bg):
+            if units == 'mmol/l':
                 bg_value = bg[i].mmol_l
-                trend_arrow = bg[i].trend_arrow
             else:
-                # Set a placeholder value for offline data
-                bg_value = ""
-                trend_arrow = "?"
-            # Create a new DataFrame with the current data point
-            new_data = pd.DataFrame({"BG": [bg_value], "TrendArrow": [trend_arrow]})
-            df = pd.concat([df, new_data], ignore_index=True)
-        df.to_csv(os.path.expanduser("~/.local/share/dexviewer/BG_data.csv"), index=False)
-    else:
-        for i in range(expected_data_points):
-            if i < len(bg):
                 bg_value = bg[i].mg_dl
-                trend_arrow = bg[i].trend_arrow
-            else:
-                # Set a placeholder value for offline data
-                bg_value = ""
-                trend_arrow = "?"
-            # Create a new DataFrame with the current data point
-            new_data = pd.DataFrame({"BG": [bg_value], "TrendArrow": [trend_arrow]})
-            df = pd.concat([df, new_data], ignore_index=True)
-        df.to_csv(os.path.expanduser("~/.local/share/dexviewer/BG_data.csv"), index=False)
-        
+            trend_arrow = bg[i].trend_arrow
+        else:
+            # Set a placeholder value for offline data
+            bg_value = ""
+            trend_arrow = "?"
+        glucose_data.append([bg_value, trend_arrow])
+    df = pd.DataFrame(glucose_data, columns=["BG", "TrendArrow"])
+    df.to_csv(os.path.expanduser("~/.local/share/dexviewer/BG_data.csv"), index=False)
+
     global latest_bg_mmol_l, latest_bg_mg_dl, latest_trend_arrow
-    
     latest_bg = dexcom.get_latest_glucose_reading()
     latest_trend_arrow = latest_bg.trend_arrow
-    latest_bg_mmol_l = latest_bg.mmol_l
-    latest_bg_mg_dl = latest_bg.mg_dl
+    if units == 'mmol/l':
+        latest_bg_mmol_l = latest_bg.mmol_l
+        latest_bg_mg_dl = None
+    else:
+        latest_bg_mg_dl = latest_bg.mg_dl
+        latest_bg_mmol_l = None
     
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        glucose_thread = threading.Thread(target=self.get_glucose_in_thread)
+        glucose_thread.start()
         #username, password, ous, units = load_credentials()
-        self.set_default_icon_name(logo)
+        self.set_default_icon_name(get_logo())
         apply_css()
         self.set_default_size(800, 400)
         self.set_title("DexViewer | Viewer")
         self.connect("close-request", self.on_delete_event)
-        get_glucose(180)
 
-        self.header = Gtk.HeaderBar()
-        self.set_titlebar(self.header)
+        header = Gtk.HeaderBar()
+        self.set_titlebar(header)
         
         menu = Gio.Menu.new()
-        self.popover = Gtk.PopoverMenu()
-        self.popover.set_menu_model(menu)
+        popover = Gtk.PopoverMenu()
+        popover.set_menu_model(menu)
 
-        self.menu_button = Gtk.MenuButton()
-        self.menu_button.set_popover(self.popover)
-        self.menu_button.set_icon_name("open-menu-symbolic")
-        self.menu_button.add_css_class('menu_button')
-        self.header.pack_end(self.menu_button)        
+        menu_button = Gtk.MenuButton()
+        menu_button.set_popover(popover)
+        menu_button.set_icon_name("open-menu-symbolic")
+        menu_button.add_css_class('menu_button')
+        header.pack_end(menu_button)        
 
         action = Gio.SimpleAction.new("about", None)
         action.connect("activate", show_about, self)
@@ -147,33 +131,51 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add_action(action)
         menu.append("Change Accounts", "win.stop")
         
-        self.add_share_source = Gtk.Button(label="Sync")
-        self.add_share_source.add_css_class('sync_glucose')
-        self.add_share_source.connect("clicked", self.sync_glucose)
-        self.add_share_source.set_icon_name("view-refresh-symbolic")
-        self.header.pack_start(self.add_share_source)
+        sync_glucose_button = Gtk.Button(label="Sync")
+        sync_glucose_button.add_css_class('sync_glucose')
+        sync_glucose_button.connect("clicked", self.sync_glucose)
+        sync_glucose_button.set_icon_name("view-refresh-symbolic")
+        header.pack_start(sync_glucose_button)
         
-        self.box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.box2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.box3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_child(self.box1)
-        self.box1.append(self.box2)
-        self.box1.append(self.box3)
+        self.box3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.set_child(box1)
+        box1.append(self.box2)
+        box1.append(self.box3)
         
-        global plotter
-        plotter = dexviewer.bgPlotter.BgPlotter(units)
-        self.box2.append(plotter.canvas)
+        self.image_grid = Gtk.Grid()
+        self.box3.append(self.image_grid)
+        self.image_grid.set_hexpand(True)
+        self.image_grid.set_vexpand(True)
+        self.image_grid.set_column_spacing(0)
+        self.image_grid.set_row_spacing(0)
+        self.image_grid.set_halign(Gtk.Align.CENTER)
+        self.image_grid.set_valign(Gtk.Align.CENTER)
 
+        self.image = Gtk.Image()
+        self.image.set_from_file(get_logo())
+        self.image.set_size_request(128, 128)
+        self.title_label = Gtk.Label(label="Loading CGM Data")
+        self.spinner = Gtk.Spinner()
+        self.spinner.start()
+        self.title_label.set_hexpand(True)
+        self.title_label.set_justify(Gtk.Justification.CENTER)
+        self.image_grid.attach(self.image, 0, 0, 1, 1)
+        self.image_grid.attach(self.title_label, 0, 1, 1, 1)
+        self.image_grid.attach(self.spinner, 2, 1, 1, 1)
+        
+    def load_glucose_data(self):
         self.grid = Gtk.Grid()
         self.box3.append(self.grid)
         
-        self.time_scale_combo = Gtk.ComboBoxText()
-        self.time_scale_combo.append("0", "1 Hour")
-        self.time_scale_combo.append("1", "3 Hours")
-        self.time_scale_combo.append("2","6 Hours")
-        self.time_scale_combo.append("3","12 Hours")
-        self.time_scale_combo.set_active(1)
-        self.time_scale_combo.connect("changed", self.on_time_scale_changed)
+        time_scale_combo = Gtk.ComboBoxText()
+        time_scale_combo.append("0", "1 Hour")
+        time_scale_combo.append("1", "3 Hours")
+        time_scale_combo.append("2","6 Hours")
+        time_scale_combo.append("3","12 Hours")
+        time_scale_combo.set_active(1)
+        time_scale_combo.connect("changed", self.on_time_scale_changed)
         
         combo_box_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         combo_box_box.set_hexpand(False)
@@ -181,8 +183,16 @@ class MainWindow(Gtk.ApplicationWindow):
         combo_box_box.set_margin_start(8)
         combo_box_box.set_margin_end(8)
 
-        combo_box_box.append(self.time_scale_combo)
+        combo_box_box.append(time_scale_combo)
         self.grid.attach(combo_box_box, 0, 4, 1, 1)
+        
+        self.box3.remove(self.image_grid)
+        self.spinner.stop()
+        
+        import dexviewer.bgPlotter
+        global plotter
+        plotter = dexviewer.bgPlotter.BgPlotter(units)
+        self.box2.append(plotter.canvas)
         
         self.trend_label = Gtk.Label(label=latest_trend_arrow)
         self.trend_label.set_hexpand(True)
@@ -198,6 +208,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.bg_label.set_justify(Gtk.Justification.CENTER)
         self.bg_label.set_valign(Gtk.Align.END)
         self.grid.attach(self.bg_label, 0, 2, 1, 1)
+    
+    def get_glucose_in_thread(self):
+        global latest_trend_arrow, latest_bg_mmol_l, latest_bg_mg_dl
+        get_glucose(180)
+        
+        def load_glucose_data_from_thread():
+            self.load_glucose_data()
+        GLib.idle_add(load_glucose_data_from_thread, priority=GLib.PRIORITY_DEFAULT)
     
     def show_preferences(self, action, param):
         preferences_window = PreferencesWindow(application=Viewer.application, main_window=self)
@@ -237,14 +255,9 @@ class MainWindow(Gtk.ApplicationWindow):
                 plotter.set_time_scale(12)
         self.update_labels(units)
         print("Synchronised Blood Glucose")
-        
-    def on_add_share_source_clicked(self, button):
-        self.show_credentials()
-        credentials_window.present()
     
     def on_time_scale_changed(self, combo):
         active_text = combo.get_active_text()
-
         # Update the plot based on the selected time scale
         if active_text == "1 Hour":
             get_glucose(60)
@@ -265,58 +278,57 @@ class HomeWindow(Gtk.ApplicationWindow):
         directory = os.path.expanduser("~/.local/share/dexviewer/")
         if not os.path.exists(directory):
             os.makedirs(directory)
-        self.set_default_icon_name(logo)
+        self.set_default_icon_name(get_logo())
         apply_css()
         self.set_default_size(800, 400)
         self.set_title("DexViewer | Home")
         self.connect("close-request", self.on_delete_event)
         
-        self.header = Gtk.HeaderBar()
-        self.set_titlebar(self.header)
+        header = Gtk.HeaderBar()
+        set_titlebar(self.header)
         
         menu = Gio.Menu.new()
-        self.popover = Gtk.PopoverMenu()
-        self.popover.set_menu_model(menu)
+        popover = Gtk.PopoverMenu()
+        popover.set_menu_model(menu)
 
-        self.menu_button = Gtk.MenuButton()
-        self.menu_button.set_popover(self.popover)
-        self.menu_button.set_icon_name("open-menu-symbolic")
-        self.menu_button.add_css_class('menu_button')
+        menu_button = Gtk.MenuButton()
+        menu_button.set_popover(popover)
+        menu_button.set_icon_name("open-menu-symbolic")
+        menu_button.add_css_class('menu_button')
 
-        self.header.pack_end(self.menu_button)
+        header.pack_end(menu_button)
 
         action = Gio.SimpleAction.new("about", None)
         action.connect("activate", show_about, self)
         self.add_action(action)
         menu.append("About", "win.about")
         
-        self.add_share_source = Gtk.Button(label="Open")
-        self.add_share_source.add_css_class('add_share_source')
-        self.add_share_source.connect("clicked", self.on_add_share_source_clicked)
-        self.add_share_source.set_icon_name("list-add")
-        self.header.pack_start(self.add_share_source)
+        share_source_button = Gtk.Button(label="Open")
+        share_source_button.add_css_class('add_share_source')
+        share_source_button.connect("clicked", self.on_add_share_source_clicked)
+        share_source_button.set_icon_name("list-add")
+        header.pack_start(share_source_button)
         
-        self.grid = Gtk.Grid()
+        grid = Gtk.Grid()
         self.set_child(self.grid)
-        self.grid.set_hexpand(True)
-        self.grid.set_vexpand(True)
-        self.grid.set_margin_start(20)
-        self.grid.set_margin_end(20)
-        self.grid.set_margin_top(20)
-        self.grid.set_margin_bottom(20)
-        
-        self.grid.set_halign(Gtk.Align.CENTER)
-        self.grid.set_valign(Gtk.Align.CENTER)
+        grid.set_hexpand(True)
+        grid.set_vexpand(True)
+        grid.set_margin_start(20)
+        grid.set_margin_end(20)
+        grid.set_margin_top(20)
+        grid.set_margin_bottom(20)
+        grid.set_halign(Gtk.Align.CENTER)
+        grid.set_valign(Gtk.Align.CENTER)
 
-        self.image = Gtk.Image()
-        self.image.set_from_file(logo)
-        self.image.set_size_request(128, 128)
-        self.title_label = Gtk.Label(label="DexViewer v1.1.0")
-        self.title_label.set_hexpand(True)
-        self.title_label.set_justify(Gtk.Justification.CENTER)
+        image = Gtk.Image()
+        image.set_from_file(get_logo())
+        image.set_size_request(128, 128)
+        title_label = Gtk.Label(label="DexViewer v1.1.0")
+        title_label.set_hexpand(True)
+        title_label.set_justify(Gtk.Justification.CENTER)
 
-        self.grid.attach(self.image, 0, 0, 1, 1)
-        self.grid.attach(self.title_label, 0, 1, 1, 1)
+        self.grid.attach(image, 0, 0, 1, 1)
+        self.grid.attach(title_label, 0, 1, 1, 1)
     
     def show_credentials(self):
         if username and password:
@@ -327,19 +339,19 @@ class HomeWindow(Gtk.ApplicationWindow):
         else:
             credentials_window.ous_check.set_active(False)
 
-    def on_credentials_provided(self, widget, data=None):
-        credentials_window.destroy()
-        self.hide()
-        Viewer.switch_to_viewer_window()
-
     def on_delete_event(self, event):
         Gtk.Application.get_default().quit()
 
     def on_add_share_source_clicked(self, button):
+        import dexviewer.dexShareCredentials
         credentials_window = dexviewer.dexShareCredentials.DexShareCredentials()
         # Present the credentials window to get user input
         credentials_window.connect(credentials_window.credentials_provided_signal, self.on_credentials_provided)
         credentials_window.present()
+    
+    def on_credentials_provided(self, widget, data=None):
+        self.hide()
+        Viewer.switch_to_viewer_window()
 
 class PreferencesWindow(Gtk.Window):
     def __init__(self, application, main_window):
@@ -351,30 +363,30 @@ class PreferencesWindow(Gtk.Window):
         self.connect("close-request", self.on_delete_event)
         self.main_window = main_window
 
-        self.box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_child(self.box1)
+        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_child(box1)
 
         # Unit Selection Combo Button
-        self.unit_combo = Gtk.ComboBoxText()
-        self.unit_combo.append("0", "mmol/l")
-        self.unit_combo.append("1", "mg/dl")
+        unit_combo = Gtk.ComboBoxText()
+        unit_combo.append("0", "mmol/l")
+        unit_combo.append("1", "mg/dl")
         if units == 'mmol/l':
-            self.unit_combo.set_active(0)
+            unit_combo.set_active(0)
         else:
-            self.unit_combo.set_active(1)
-        self.unit_combo.connect("changed", self.on_unit_changed)
+            unit_combo.set_active(1)
+        unit_combo.connect("changed", self.on_unit_changed)
 
-        self.unit_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.unit_box.set_vexpand(True)
-        self.unit_box.set_halign(Gtk.Align.CENTER)
-        self.unit_box.set_valign(Gtk.Align.CENTER)
+        unit_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        unit_box.set_vexpand(True)
+        unit_box.set_halign(Gtk.Align.CENTER)
+        unit_box.set_valign(Gtk.Align.CENTER)
 
-        self.label = Gtk.Label(label="Blood Glucose Unit")
-        self.unit_box.append(self.label)
-        self.unit_box.set_spacing(5)
+        label = Gtk.Label(label="Blood Glucose Unit")
+        unit_box.append(label)
+        unit_box.set_spacing(5)
 
-        self.unit_box.append(self.unit_combo)
-        self.box1.append(self.unit_box)
+        unit_box.append(unit_combo)
+        box1.append(unit_box)
     
     def on_delete_event(self, event):
         self.main_window.update_labels(units)
@@ -401,4 +413,5 @@ class PreferencesWindow(Gtk.Window):
 
 def main(flag):
     app = Viewer(application_id="com.github.Narmis-E.DexViewer", flag=flag)
+    print("start")
     app.run(sys.argv)
