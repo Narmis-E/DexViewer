@@ -65,7 +65,7 @@ class DexShareCredentials(Gtk.ApplicationWindow):
         self.password = self.password_entry.get_text()
         self.ous = str(self.ous_check.get_active())
         if not self.username or not self.password:
-            dialog = Gtk.AlertDialog(transient_for=self)
+            dialog = Gtk.AlertDialog()
             dialog.set_message("Invalid Credentials")
             dialog.set_detail("Credentials cannot be empty.")
             dialog.set_buttons(["OK"])
@@ -78,7 +78,7 @@ class DexShareCredentials(Gtk.ApplicationWindow):
         except errors.AccountError as e:
             if "Password not valid" in str(e):
                 # Handle the incorrect password error
-                dialog = Gtk.AlertDialog(transient_for=self)
+                dialog = Gtk.AlertDialog()
                 dialog.set_message("Invalid Credentials")
                 dialog.set_detail("The one or more of provided credentials are not valid.")
                 dialog.set_buttons(["OK"])
