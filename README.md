@@ -21,7 +21,7 @@ DexViewer provides periodic glucose data directly from your Dexcom CGM device, h
 
 <div align="center">
   <br>
-  <img src="https://github.com/Narmis-E/DexViewer/assets/109248529/a3258ae7-9edc-4570-a9e3-9886ca45ea16"/>
+  <img src="https://github.com/Narmis-E/DexViewer/assets/109248529/fc111824-c016-445e-95ad-e0e65b05f923"/>
   <p>Here is a screenshot of the Viewer Window.</p>
   <br>
 </div>
