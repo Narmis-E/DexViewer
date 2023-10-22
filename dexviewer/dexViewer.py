@@ -94,6 +94,7 @@ def get_glucose(time_scale):
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.sm = self.get_application().get_style_manager()
         glucose_thread = threading.Thread(target=self.get_glucose_in_thread)
         glucose_thread.start()
         #username, password, ous, units = load_credentials()
@@ -113,7 +114,6 @@ class MainWindow(Gtk.ApplicationWindow):
         menu_button = Gtk.MenuButton()
         menu_button.set_popover(popover)
         menu_button.set_icon_name("open-menu-symbolic")
-        menu_button.add_css_class('menu_button')
         header.pack_end(menu_button)        
 
         action = Gio.SimpleAction.new("about", None)
@@ -169,13 +169,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid = Gtk.Grid()
         self.box3.append(self.grid)
         
-        time_scale_combo = Gtk.ComboBoxText()
-        time_scale_combo.append("0", "1 Hour")
-        time_scale_combo.append("1", "3 Hours")
-        time_scale_combo.append("2","6 Hours")
-        time_scale_combo.append("3","12 Hours")
-        time_scale_combo.set_active(1)
-        time_scale_combo.connect("changed", self.on_time_scale_changed)
+        self.time_scale_combo = Gtk.ComboBoxText()
+        self.time_scale_combo.append("0", "1 Hour")
+        self.time_scale_combo.append("1", "3 Hours")
+        self.time_scale_combo.append("2","6 Hours")
+        self.time_scale_combo.append("3","12 Hours")
+        self.time_scale_combo.set_active(1)
+        self.time_scale_combo.connect("changed", self.on_time_scale_changed)
         
         combo_box_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         combo_box_box.set_hexpand(False)
@@ -183,7 +183,7 @@ class MainWindow(Gtk.ApplicationWindow):
         combo_box_box.set_margin_start(8)
         combo_box_box.set_margin_end(8)
 
-        combo_box_box.append(time_scale_combo)
+        combo_box_box.append(self.time_scale_combo)
         self.grid.attach(combo_box_box, 0, 4, 1, 1)
         
         self.box3.remove(self.image_grid)
@@ -285,7 +285,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         self.connect("close-request", self.on_delete_event)
         
         header = Gtk.HeaderBar()
-        set_titlebar(self.header)
+        self.set_titlebar(header)
         
         menu = Gio.Menu.new()
         popover = Gtk.PopoverMenu()
@@ -294,8 +294,6 @@ class HomeWindow(Gtk.ApplicationWindow):
         menu_button = Gtk.MenuButton()
         menu_button.set_popover(popover)
         menu_button.set_icon_name("open-menu-symbolic")
-        menu_button.add_css_class('menu_button')
-
         header.pack_end(menu_button)
 
         action = Gio.SimpleAction.new("about", None)
@@ -310,7 +308,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         header.pack_start(share_source_button)
         
         grid = Gtk.Grid()
-        self.set_child(self.grid)
+        self.set_child(grid)
         grid.set_hexpand(True)
         grid.set_vexpand(True)
         grid.set_margin_start(20)
@@ -327,8 +325,8 @@ class HomeWindow(Gtk.ApplicationWindow):
         title_label.set_hexpand(True)
         title_label.set_justify(Gtk.Justification.CENTER)
 
-        self.grid.attach(image, 0, 0, 1, 1)
-        self.grid.attach(title_label, 0, 1, 1, 1)
+        grid.attach(image, 0, 0, 1, 1)
+        grid.attach(title_label, 0, 1, 1, 1)
     
     def show_credentials(self):
         if username and password:
@@ -354,6 +352,7 @@ class HomeWindow(Gtk.ApplicationWindow):
         Viewer.switch_to_viewer_window()
 
 class PreferencesWindow(Gtk.Window):
+    dark_mode_enabled = False
     def __init__(self, application, main_window):
         super().__init__(title="Preferences", application=application)
         self.set_default_size(400, 200)
@@ -364,9 +363,19 @@ class PreferencesWindow(Gtk.Window):
         self.main_window = main_window
 
         box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box1.set_valign(Gtk.Align.CENTER)
+        box1.set_spacing(20)
         self.set_child(box1)
 
-        # Unit Selection Combo Button
+        # Create a vertical box for labels and a horizontal box for widgets
+        unit_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        unit_box.set_halign(Gtk.Align.CENTER)
+        dark_mode_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        dark_mode_box.set_halign(Gtk.Align.CENTER)
+
+        box1.append(unit_box)
+        box1.append(dark_mode_box)
+        
         unit_combo = Gtk.ComboBoxText()
         unit_combo.append("0", "mmol/l")
         unit_combo.append("1", "mg/dl")
@@ -375,19 +384,32 @@ class PreferencesWindow(Gtk.Window):
         else:
             unit_combo.set_active(1)
         unit_combo.connect("changed", self.on_unit_changed)
+        unit_label = Gtk.Label(label="Blood Glucose Unit")
 
-        unit_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        unit_box.set_vexpand(True)
-        unit_box.set_halign(Gtk.Align.CENTER)
-        unit_box.set_valign(Gtk.Align.CENTER)
+        dark_mode_switch = Gtk.Switch()
+        dark_mode_switch.set_hexpand(False)
+        dark_mode_switch.connect("state-set", self.dark_mode_toggled)
 
-        label = Gtk.Label(label="Blood Glucose Unit")
-        unit_box.append(label)
-        unit_box.set_spacing(5)
+        # Set the state of the toggle based on the class-level variable
+        dark_mode_switch.set_active(self.dark_mode_enabled)
+        dark_mode_label = Gtk.Label(label="Dark Mode")
 
+        unit_box.append(unit_label)
         unit_box.append(unit_combo)
-        box1.append(unit_box)
-    
+        dark_mode_box.append(dark_mode_label)
+        dark_mode_box.append(dark_mode_switch)
+
+    def dark_mode_toggled(self, switch, state):
+        if state:
+            plotter.dark_mode_toggle()
+            self.main_window.sm.set_color_scheme(Adw.ColorScheme.PREFER_DARK)
+        else:
+            plotter.light_mode_toggle()
+            self.main_window.sm.set_color_scheme(Adw.ColorScheme.PREFER_LIGHT)
+
+        # Update the class-level variable to save the state
+        PreferencesWindow.dark_mode_enabled = state
+        
     def on_delete_event(self, event):
         self.main_window.update_labels(units)
         return False
@@ -412,6 +434,5 @@ class PreferencesWindow(Gtk.Window):
             print('units changed to mg/dl')
 
 def main(flag):
-    app = Viewer(application_id="com.github.Narmis-E.DexViewer", flag=flag)
-    print("start")
+    app = Viewer(application_id="com.github.Narmis-E.Dexviewer", flag=flag)
     app.run(sys.argv)
