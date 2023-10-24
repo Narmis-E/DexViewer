@@ -87,5 +87,6 @@ but I will still fly the 'pls dont theme' badge to let people know it will and d
 - [x] Implement account switching
 - [ ] Implement real time data
 - [ ] Package for flatpak
-- [ ] NightScout integration? 
+- [ ] NightScout integration?
+- [ ] Interactive graphs (may need to switch graphing lib)
 
