@@ -90,3 +90,5 @@ but I will still fly the 'pls dont theme' badge to let people know it will and d
 - [ ] NightScout integration?
 - [ ] Interactive graphs (may need to switch graphing lib)
 
+#### Disclaimer
+DexViewer currently stores your Dexcom SHARE password in plaintext inside the config.ini file, which I understand is something which is perhaps the epitome of bad security, but I don't plan on changing this unless I really need to (I know I could use some hashing library and then retrieve it when needed).
